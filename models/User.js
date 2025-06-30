@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   // Optional: dark/light mode preference
-  theme: { type: String, enum: ['dark', 'light'], default: 'light' }
+  theme: { type: String, enum: ['dark', 'light'], default: 'light' },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }
 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -1,0 +1,192 @@
+openapi: 3.0.0
+info:
+  title: NGO Project API
+  version: 1.0.0
+  description: API documentation for the NGO Project backend
+servers:
+  - url: http://localhost:5000
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Validation error
+  /api/auth/login:
+    post:
+      summary: Login and return JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: JWT token
+        '400':
+          description: Validation error
+  /api/summary:
+    get:
+      summary: Get account summary
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: integer
+        - in: query
+          name: year
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Summary object
+  /api/transactions:
+    get:
+      summary: Get all or filtered transactions
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+        - in: query
+          name: category
+          schema:
+            type: string
+        - in: query
+          name: description
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of transactions
+    post:
+      summary: Add a new transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                date:
+                  type: string
+                description:
+                  type: string
+                amount:
+                  type: number
+                category:
+                  type: string
+                type:
+                  type: string
+      responses:
+        '201':
+          description: Transaction created
+  /api/transactions/{id}:
+    put:
+      summary: Update a transaction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Transaction updated
+    delete:
+      summary: Delete a transaction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transaction deleted
+  /api/transactions/analytics/category-summary:
+    get:
+      summary: Get totals per category
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: integer
+        - in: query
+          name: year
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category summary
+  /api/transactions/export/csv:
+    get:
+      summary: Export transactions as CSV
+      responses:
+        '200':
+          description: CSV file
+  /api/auth/theme:
+    get:
+      summary: Get user theme preference
+      responses:
+        '200':
+          description: Theme object
+    put:
+      summary: Update user theme preference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme:
+                  type: string
+      responses:
+        '200':
+          description: Theme updated
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Health status 
