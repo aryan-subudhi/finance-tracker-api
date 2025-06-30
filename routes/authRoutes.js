@@ -1,0 +1,31 @@
+const express = require('express');
+const router = express.Router();
+const { body } = require('express-validator');
+const authController = require('../controllers/authController');
+const auth = require('../middleware/auth');
+
+// Register route
+router.post(
+  '/register',
+  [
+    body('username').isString().notEmpty(),
+    body('email').isEmail(),
+    body('password').isLength({ min: 6 })
+  ],
+  authController.register
+);
+
+// Login route
+router.post(
+  '/login',
+  [
+    body('email').isEmail(),
+    body('password').isLength({ min: 6 })
+  ],
+  authController.login
+);
+
+router.get('/theme', auth, authController.getTheme);
+router.put('/theme', auth, authController.updateTheme);
+
+module.exports = router;
