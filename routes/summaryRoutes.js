@@ -11,4 +11,6 @@ router.get(
   summaryController.getSummary
 );
 
+router.get('/category-summary', auth, summaryController.categorySummary);
+
 module.exports = router;

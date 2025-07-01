@@ -1,14 +1,20 @@
 require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const helmet = require('helmet');
 const cors = require('cors');
 const xss = require('xss-clean');
 const mongoSanitize = require('express-mongo-sanitize');
-const mongoose = require('mongoose');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const rateLimit = require('express-rate-limit');
+
+const authRoutes = require('./routes/authRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
+const summaryRoutes = require('./routes/summaryRoutes');
+const userRoutes = require('./routes/userRoutes');
+const exportRoutes = require('./routes/exportRoutes');
 
 const app = express();
 
@@ -29,14 +35,11 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-const transactionRoutes = require('./routes/transactionRoutes');
-app.use('/api/transactions', transactionRoutes);
-
-const summaryRoutes = require('./routes/summaryRoutes');
-app.use('/api/summary', summaryRoutes);
-
-const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/summary', summaryRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/export', exportRoutes);
 
 const swaggerDocument = YAML.load('./swagger.yaml');
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -46,6 +49,8 @@ const limiter = rateLimit({
   max: 100 // limit each IP to 100 requests per windowMs
 });
 app.use(limiter);
+
+app.get('/', (req, res) => res.send('API is running!'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 

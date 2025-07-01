@@ -8,8 +8,8 @@ const auth = require('../middleware/auth');
 router.post(
   '/register',
   [
-    body('username').isString().notEmpty(),
-    body('email').isEmail(),
+    body('username').notEmpty().trim().escape(),
+    body('email').isEmail().normalizeEmail(),
     body('password').isLength({ min: 6 })
   ],
   authController.register
@@ -19,8 +19,8 @@ router.post(
 router.post(
   '/login',
   [
-    body('email').isEmail(),
-    body('password').isLength({ min: 6 })
+    body('email').isEmail().normalizeEmail(),
+    body('password').exists()
   ],
   authController.login
 );

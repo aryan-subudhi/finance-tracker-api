@@ -3,37 +3,31 @@ const Transaction = require('../models/Transaction');
 const { Parser } = require('json2csv');
 
 // Get all or filtered transactions
-exports.getTransactions = async (req, res) => {
+exports.getAll = async (req, res) => {
   const { startDate, endDate, category, description, page = 1, limit = 10 } = req.query;
   const filter = { userId: req.user.userId };
-  if (startDate) filter.date = { ...filter.date, $gte: new Date(startDate) };
-  if (endDate) filter.date = { ...filter.date, $lte: new Date(endDate) };
+  if (startDate && endDate) filter.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
   if (category) filter.category = category;
   if (description) filter.description = { $regex: description, $options: 'i' };
+
   try {
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const [transactions, total] = await Promise.all([
-      Transaction.find(filter).sort({ date: -1 }).skip(skip).limit(parseInt(limit)),
-      Transaction.countDocuments(filter)
-    ]);
-    res.json({
-      transactions,
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit),
-      totalPages: Math.ceil(total / limit)
-    });
+    const transactions = await Transaction.find(filter)
+      .sort({ date: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+    res.json(transactions);
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 // Add a new transaction
-exports.addTransaction = async (req, res) => {
+exports.create = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+  const { date, description, amount, category, type } = req.body;
   try {
-    const { date, description, amount, category, type } = req.body;
     const transaction = new Transaction({
       userId: req.user.userId,
       date,
@@ -45,37 +39,37 @@ exports.addTransaction = async (req, res) => {
     await transaction.save();
     res.status(201).json(transaction);
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 // Delete a transaction
-exports.deleteTransaction = async (req, res) => {
+exports.delete = async (req, res) => {
   try {
-    const transaction = await Transaction.findOneAndDelete({ _id: req.params.id, userId: req.user.userId });
-    if (!transaction) return res.status(404).json({ msg: 'Transaction not found' });
-    res.json({ msg: 'Transaction deleted' });
+    const transaction = await Transaction.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.userId
+    });
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
+    res.json({ message: 'Transaction deleted' });
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 // Update a transaction
-exports.updateTransaction = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+exports.update = async (req, res) => {
+  const { date, description, amount, category, type } = req.body;
   try {
-    const update = req.body;
-    update.updatedAt = new Date();
     const transaction = await Transaction.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.userId },
-      update,
+      { date, description, amount, category, type, updatedAt: Date.now() },
       { new: true }
     );
-    if (!transaction) return res.status(404).json({ msg: 'Transaction not found' });
+    if (!transaction) return res.status(404).json({ error: 'Transaction not found' });
     res.json(transaction);
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 

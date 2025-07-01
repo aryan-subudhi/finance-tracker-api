@@ -2,37 +2,46 @@ const { validationResult } = require('express-validator');
 const Transaction = require('../models/Transaction');
 
 exports.getSummary = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
   const { month, year } = req.query;
-  const match = { userId: req.user.userId };
+  const userId = req.user.userId;
+  const match = { userId };
   if (month && year) {
     const start = new Date(year, month - 1, 1);
-    const end = new Date(year, month, 0, 23, 59, 59, 999);
+    const end = new Date(year, month, 0, 23, 59, 59);
     match.date = { $gte: start, $lte: end };
   }
   try {
-    const [income, expense, recentTransactions] = await Promise.all([
-      Transaction.aggregate([
-        { $match: { ...match, type: 'Income' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]),
-      Transaction.aggregate([
-        { $match: { ...match, type: 'Expense' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
-      ]),
-      Transaction.find(match).sort({ date: -1 }).limit(5)
-    ]);
-    const totalIncome = income[0]?.total || 0;
-    const totalExpense = expense[0]?.total || 0;
+    const transactions = await Transaction.find(match).sort({ date: -1 });
+    const totalIncome = transactions.filter(t => t.type === 'Income').reduce((a, b) => a + b.amount, 0);
+    const totalExpense = transactions.filter(t => t.type === 'Expense').reduce((a, b) => a + b.amount, 0);
     const balance = totalIncome - totalExpense;
     res.json({
       balance,
       totalIncome,
       totalExpense,
-      recentTransactions
+      recentTransactions: transactions.slice(0, 5)
     });
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.categorySummary = async (req, res) => {
+  const { month, year } = req.query;
+  const match = { userId: req.user.userId };
+  if (month && year) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0, 23, 59, 59);
+    match.date = { $gte: start, $lte: end };
+  }
+  try {
+    const summary = await Transaction.aggregate([
+      { $match: match },
+      { $group: { _id: '$category', total: { $sum: '$amount' } } },
+      { $project: { category: '$_id', total: 1, _id: 0 } }
+    ]);
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
   }
 };

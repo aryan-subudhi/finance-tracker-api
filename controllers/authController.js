@@ -12,46 +12,44 @@ const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
 
 exports.register = async (req, res) => {
-  // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const { username, email, password } = req.body;
   try {
     let user = await User.findOne({ email });
-    if (user) return res.status(400).json({ msg: 'User already exists' });
+    if (user) return res.status(400).json({ error: 'User already exists' });
 
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-
+    const passwordHash = await bcrypt.hash(password, 10);
     user = new User({ username, email, passwordHash });
     await user.save();
 
-    res.status(201).json({ msg: 'User registered successfully' });
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 
 exports.login = async (req, res) => {
-  // Validate input
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ msg: 'Invalid credentials' });
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
+    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
 
-    const payload = { userId: user._id };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
-
+    const token = jwt.sign(
+      { userId: user._id, theme: user.theme, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
     res.json({ token });
   } catch (err) {
-    res.status(500).json({ msg: 'Server error' });
+    res.status(500).json({ error: 'Server error' });
   }
 };
 

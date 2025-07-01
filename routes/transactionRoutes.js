@@ -3,9 +3,10 @@ const router = express.Router();
 const { body, query } = require('express-validator');
 const auth = require('../middleware/auth');
 const transactionController = require('../controllers/transactionController');
+const userController = require('../controllers/userController');
 
 // Get all or filtered transactions
-router.get('/', auth, transactionController.getTransactions);
+router.get('/', auth, transactionController.getAll);
 
 // Add a new transaction
 router.post(
@@ -13,16 +14,16 @@ router.post(
   auth,
   [
     body('date').isISO8601(),
-    body('description').isString().notEmpty(),
+    body('description').notEmpty().trim().escape(),
     body('amount').isNumeric(),
-    body('category').isString().notEmpty(),
+    body('category').notEmpty().trim().escape(),
     body('type').isIn(['Income', 'Expense'])
   ],
-  transactionController.addTransaction
+  transactionController.create
 );
 
 // Delete a transaction
-router.delete('/:id', auth, transactionController.deleteTransaction);
+router.delete('/:id', auth, transactionController.delete);
 
 // Update a transaction
 router.put(
@@ -30,12 +31,12 @@ router.put(
   auth,
   [
     body('date').optional().isISO8601(),
-    body('description').optional().isString().notEmpty(),
+    body('description').optional().trim().escape(),
     body('amount').optional().isNumeric(),
-    body('category').optional().isString().notEmpty(),
+    body('category').optional().trim().escape(),
     body('type').optional().isIn(['Income', 'Expense'])
   ],
-  transactionController.updateTransaction
+  transactionController.update
 );
 
 // Analytics: category summary
@@ -48,5 +49,8 @@ router.get(
 
 // Export transactions as CSV
 router.get('/export/csv', auth, transactionController.exportTransactions);
+
+router.get('/theme', auth, userController.getTheme);
+router.put('/theme', auth, userController.updateTheme);
 
 module.exports = router;
