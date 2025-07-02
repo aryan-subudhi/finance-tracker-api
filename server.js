@@ -9,6 +9,7 @@ const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const rateLimit = require('express-rate-limit');
+const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/authRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
@@ -31,9 +32,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+connectDB();
 
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);

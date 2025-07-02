@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, query } = require('express-validator');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authMiddleware');
 const transactionController = require('../controllers/transactionController');
 const userController = require('../controllers/userController');
 
@@ -43,7 +43,8 @@ router.put(
 router.get(
   '/analytics/category-summary',
   auth,
-  [query('month').optional().isInt({ min: 1, max: 12 }), query('year').optional().isInt()],
+  query('month').optional().isInt({ min: 1, max: 12 }),
+  query('year').optional().isInt(),
   transactionController.categorySummary
 );
 

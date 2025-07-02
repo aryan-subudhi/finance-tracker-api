@@ -1,11 +1,3 @@
-const authRoutes = require('./routes/authRoutes');
-const transactionRoutes = require('./routes/transactionRoutes');
-// ...other routes
-
-app.use('/api/auth', authRoutes);
-app.use('/api/transactions', transactionRoutes);
-// ...other routes
-
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
